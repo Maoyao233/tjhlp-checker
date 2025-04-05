@@ -100,13 +100,16 @@ def find_all_violations(file: Path, config: Config):
 
         match canonical_type.kind:
             case CX.TypeKind.RECORD:
-                # 如果不是用户自定义的类, 则检查是否在白名单中
-                if (
-                    config.grammar.system_class.disable
-                    and node_type.get_declaration().location.is_in_system_header
-                    and node_type.spelling not in config.grammar.system_class.whitelist
-                ):
-                    return ViolationKind.SYSTEM_CLASS
+                if config.grammar.system_class.disable:
+                    # 如果不是用户自定义的类, 则检查是否在白名单中
+                    diclaration = node_type.get_declaration()
+                    assert diclaration
+                    if (
+                        diclaration.location.is_in_system_header
+                        and node_type.spelling
+                        not in config.grammar.system_class.whitelist
+                    ):
+                        return ViolationKind.SYSTEM_CLASS
             # 检查是否数组
             case CX.TypeKind.CONSTANTARRAY | CX.TypeKind.VARIABLEARRAY:
                 if config.grammar.disable_array:
@@ -164,6 +167,16 @@ def find_all_violations(file: Path, config: Config):
                 if config.grammar.disable_branch:
                     rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
 
+    def check_unary_operator(node: CX.Cursor):
+        operator_token = next(node.get_tokens())
+        assert operator_token.kind == CX.TokenKind.PUNCTUATION
+        if node.spelling == "!":
+            if config.grammar.disable_branch:
+                rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
+        if node.spelling == "~":
+            if config.grammar.disable_bit_operation:
+                rule_violations.append(RuleViolation(ViolationKind.BIT_OPERATION, node))
+
     def traverse(node: CX.Cursor):
         match node.kind:
             case CK.INCLUSION_DIRECTIVE:
@@ -187,9 +200,8 @@ def find_all_violations(file: Path, config: Config):
                 if config.grammar.disable_loop:
                     rule_violations.append(RuleViolation(ViolationKind.LOOP, node))
             case CK.UNARY_OPERATOR:
-                # TODO: 检查单目位运算符/逻辑运算符
                 # TODO: 检查形如 *(p+i) 的非法指针使用
-                pass
+                check_unary_operator(node)
             case CK.CONDITIONAL_OPERATOR:
                 if config.grammar.disable_branch:
                     rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
@@ -209,6 +221,7 @@ def find_all_violations(file: Path, config: Config):
         for child in children:
             traverse(child)
 
+    assert tu.cursor
     traverse(tu.cursor)
 
     return rule_violations
