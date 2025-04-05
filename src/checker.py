@@ -77,9 +77,15 @@ def find_all_violations(file: Path, config: Config):
 
     def check_inclusion(node: CX.Cursor):
         assert node.kind == CK.INCLUSION_DIRECTIVE
-        # print(list(token.spelling for token in node.get_tokens()))
+
+        try:
+            filename = node.get_included_file().name
+        except AssertionError:
+            # 若包含的头文件不存在，则直接忽略
+            return
+
         if (
-            path := pathlib.Path(node.get_included_file().name).resolve()
+            path := pathlib.Path(filename).resolve()
         ).is_relative_to(basePath):
             # 本地头文件，和禁用的头文件重名可以接受
             return
