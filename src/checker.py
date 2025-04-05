@@ -175,11 +175,11 @@ def find_all_violations(file: Path, config: Config):
 
     def check_unary_operator(node: CX.Cursor):
         operator_token = next(node.get_tokens())
-        assert operator_token.kind == CX.TokenKind.PUNCTUATION
-        if node.spelling == "!":
+
+        if operator_token.spelling == "!":
             if config.grammar.disable_branch:
                 rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
-        if node.spelling == "~":
+        if operator_token.spelling == "~":
             if config.grammar.disable_bit_operation:
                 rule_violations.append(RuleViolation(ViolationKind.BIT_OPERATION, node))
 
