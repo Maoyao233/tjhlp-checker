@@ -9,6 +9,7 @@ class CommonConfig(BaseModel):
     libclang_path: Path | None = None
     libclang_file: Path | None = None
     encoding: str = "utf-8"
+    debug: bool = False
 
     @model_validator(mode="after")
     def verify(self) -> Self:
@@ -58,7 +59,6 @@ class Config(BaseModel):
     common: CommonConfig
     header: HeaderConfig = HeaderConfig()
     grammar: GrammarConfig = GrammarConfig()
-    debug: bool = False
 
 
 def load_config(file: BinaryIO):

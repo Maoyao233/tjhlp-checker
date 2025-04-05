@@ -2,18 +2,19 @@
 同济高程代码合规检查
 """
 
-from typing import Annotated
-import clang.cindex as CX
-from clang.cindex import CursorKind as CK, BinaryOperator as BO
-import typer
 import pathlib
 from enum import Enum
-from config import Config, load_config
-# from rich import print
+from pathlib import Path
+
+import clang.cindex as CX
+from clang.cindex import BinaryOperator as BO
+from clang.cindex import CursorKind as CK
+
+from .config import Config
 
 #  工作基准目录，用来判定头文件是否为系统头文件（用户自定义头文件不受blacklist/whitelist限制）
 #  TODO: 由用户指定
-basePath = pathlib.Path.cwd()
+basePath = Path.cwd()
 
 
 class ViolationKind(Enum):
@@ -54,7 +55,24 @@ class RuleViolation:
         return str(self)
 
 
-def find_all_violations(tu: CX.TranslationUnit, config: Config):
+def find_all_violations(file: Path, config: Config):
+    if config.common.libclang_file:
+        CX.Config.set_library_file(config.common.libclang_file)
+
+    if config.common.libclang_path:
+        CX.Config.set_library_path(config.common.libclang_path)
+
+    parse_options = CX.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
+    if file.name.endswith((".h", ".hpp")):
+        parse_options |= CX.TranslationUnit.PARSE_INCOMPLETE
+
+    index = CX.Index.create()
+    tu = index.parse(
+        str(file.resolve()),
+        options=parse_options,
+        args=[f"-finput-charset={config.common.encoding}"],
+    )
+
     rule_violations: list[RuleViolation] = []
 
     def check_inclusion(node: CX.Cursor):
@@ -194,44 +212,3 @@ def find_all_violations(tu: CX.TranslationUnit, config: Config):
     traverse(tu.cursor)
 
     return rule_violations
-
-
-def main(
-    file: Annotated[str, typer.Argument(help="The path of input file")],
-    config_file: Annotated[str, typer.Option(help="The path of config file")],
-):
-    with open(config_file, "rb") as f:
-        config = load_config(f)
-
-    if config.common.libclang_file:
-        CX.Config.set_library_file(config.common.libclang_file)
-
-    if config.common.libclang_path:
-        CX.Config.set_library_path(config.common.libclang_path)
-
-    parse_options = CX.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
-    if file.endswith((".h", ".hpp")):
-        parse_options |= CX.TranslationUnit.PARSE_INCOMPLETE
-
-    index = CX.Index.create()
-    tu = index.parse(
-        file, options=parse_options, args=[f"-finput-charset={config.common.encoding}"]
-    )
-
-    violations = find_all_violations(tu, config)
-    if violations:
-        print(f"Found {len(violations)} violations in {file}:")
-        with open(file, "rb") as src:
-            src_text = src.read()
-            for violation in violations:
-                source_range = violation.cursor.extent
-                print(
-                    str(violation),
-                    src_text[
-                        source_range.start.offset : source_range.end.offset
-                    ].decode(config.common.encoding),
-                )
-
-
-if __name__ == "__main__":
-    typer.run(main)
