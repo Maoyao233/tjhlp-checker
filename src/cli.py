@@ -3,8 +3,8 @@ from typing import Annotated
 
 import typer
 
-from .checker import find_all_violations
-from .config import load_config
+from checker import find_all_violations
+from config import load_config
 
 
 def main(
