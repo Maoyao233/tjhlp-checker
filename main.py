@@ -225,8 +225,10 @@ def main(
         parse_options |= CX.TranslationUnit.PARSE_INCOMPLETE
 
     index = CX.Index.create()
-    tu = index.parse(file, options=parse_options)
-        
+    tu = index.parse(
+        file, options=parse_options, args=[f"-finput-charset={config.common.encoding}"]
+    )
+
     violations = find_all_violations(tu, config)
     if violations:
         print(f"Found {len(violations)} violations:")
@@ -234,7 +236,12 @@ def main(
             src_text = src.read()
             for violation in violations:
                 source_range = violation.cursor.extent
-                print(str(violation), src_text[source_range.start.offset: source_range.end.offset].decode('utf-8'))
+                print(
+                    str(violation),
+                    src_text[
+                        source_range.start.offset : source_range.end.offset
+                    ].decode(config.common.encoding),
+                )
 
 
 if __name__ == "__main__":

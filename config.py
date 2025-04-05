@@ -3,15 +3,21 @@ from typing import Self
 from pydantic import BaseModel, model_validator
 from typing import BinaryIO
 from pathlib import Path
+import codecs
 
 class CommonConfig(BaseModel):
     libclang_path: Path | None = None
     libclang_file: Path | None = None
+    encoding: str = "utf-8"
 
     @model_validator(mode="after")
     def verify(self) -> Self:
         if not self.libclang_path and not self.libclang_file:
             raise ValueError("must set libclang_path or libclang_file")
+        try:
+            codecs.lookup(self.encoding)
+        except LookupError:
+            raise ValueError(f"{self.encoding} is not a valid encoding")
         return self
 
 
