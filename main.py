@@ -144,9 +144,7 @@ def find_all_violations(tu: CX.TranslationUnit, config: Config):
                     )
             case BO.LAnd | BO.LE | BO.EQ | BO.NE | BO.LOr | BO.LT | BO.GT | BO.GE:
                 if config.grammar.disable_branch:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.BRANCH, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
 
     def traverse(node: CX.Cursor):
         match node.kind:
@@ -160,24 +158,16 @@ def find_all_violations(tu: CX.TranslationUnit, config: Config):
                 check_binary_operator(node)
             case CK.ARRAY_SUBSCRIPT_EXPR:
                 if config.grammar.disable_array:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.ARRAY, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.ARRAY, node))
             case CK.CONDITIONAL_OPERATOR | CK.IF_STMT | CK.SWITCH_STMT:
                 if config.grammar.disable_branch:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.BRANCH, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
             case CK.GOTO_STMT:
                 if config.grammar.disable_goto:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.GOTO, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.GOTO, node))
             case CK.WHILE_STMT | CK.FOR_STMT | CK.DO_STMT:
                 if config.grammar.disable_loop:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.LOOP, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.LOOP, node))
             case CK.UNARY_OPERATOR:
                 # TODO: 检查单目位运算符/逻辑运算符
                 # TODO: 检查形如 *(p+i) 的非法指针使用
@@ -187,14 +177,10 @@ def find_all_violations(tu: CX.TranslationUnit, config: Config):
                     rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
             case CK.STRUCT_DECL:
                 if config.grammar.disable_struct:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.STRUCT, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.STRUCT, node))
             case CK.CLASS_DECL:
                 if config.grammar.disable_class:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.CLASS, node)
-                    )
+                    rule_violations.append(RuleViolation(ViolationKind.CLASS, node))
 
         children = list(
             child
@@ -234,8 +220,8 @@ def main(
 
     violations = find_all_violations(tu, config)
     if violations:
-        print(f"Found {len(violations)} violations:")
-        with open(file, 'rb') as src:
+        print(f"Found {len(violations)} violations in {file}:")
+        with open(file, "rb") as src:
             src_text = src.read()
             for violation in violations:
                 source_range = violation.cursor.extent
