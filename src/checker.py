@@ -217,6 +217,8 @@ def find_all_violations(file: Path, config: Config):
             case CK.CLASS_DECL:
                 if config.grammar.disable_class:
                     rule_violations.append(RuleViolation(ViolationKind.CLASS, node))
+            # TODO: 检查全局变量、静态局部变量
+            # TODO: 检查违规使用系统函数（）
 
         children = list(
             child
