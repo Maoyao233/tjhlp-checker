@@ -182,6 +182,9 @@ def find_all_violations(tu: CX.TranslationUnit, config: Config):
                 # TODO: 检查单目位运算符/逻辑运算符
                 # TODO: 检查形如 *(p+i) 的非法指针使用
                 pass
+            case CK.CONDITIONAL_OPERATOR:
+                if config.grammar.disable_branch:
+                    rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
             case CK.STRUCT_DECL:
                 if config.grammar.disable_struct:
                     rule_violations.append(
