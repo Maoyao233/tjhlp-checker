@@ -42,7 +42,6 @@ class GrammarConfig(BaseModel):
     disable_struct: bool = False
     disable_class: bool = False
     disable_function: bool = False
-    disable_auto: bool = False
     disable_branch: bool = False
     disable_goto: bool = False
     disable_loop: bool = False
