@@ -45,7 +45,6 @@ class GrammarConfig(BaseModel):
     disable_branch: bool = False
     disable_goto: bool = False
     disable_loop: bool = False
-    disable_range_based_loop: bool = False
     disable_bit_operation: bool = False
     disable_external_global_var: bool = False
     disable_internal_global_var: bool = False  # static global/in anonymous namespace

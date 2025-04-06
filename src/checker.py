@@ -30,12 +30,11 @@ class ViolationKind(Enum):
     BRANCH = 9
     GOTO = 10
     LOOP = 11
-    RANGE_BASED_LOOP = 12
-    BIT_OPERATION = 13
-    SYSTEM_CLASS = 14
-    INTERNAL_GLOBAL = 15
-    EXTERNAL_GLOBAL = 16
-    STATIC_LOCAL = 17
+    BIT_OPERATION = 12
+    SYSTEM_CLASS = 13
+    INTERNAL_GLOBAL = 14
+    EXTERNAL_GLOBAL = 15
+    STATIC_LOCAL = 16
 
 
 class RuleViolation:
