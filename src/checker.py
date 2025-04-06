@@ -159,7 +159,7 @@ def find_all_violations(file: Path, config: Config):
                 | BO.Shr
                 | BO.ShrAssign
                 | BO.And
-                | BO.AddAssign
+                | BO.AndAssign
                 | BO.Or
                 | BO.OrAssign
                 | BO.Xor
