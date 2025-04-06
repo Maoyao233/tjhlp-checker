@@ -16,17 +16,24 @@ def main(
 
     violations = find_all_violations(file, config)
     if violations:
-        print(f"Found {len(violations)} violations in {file}:")
         with open(file, "rb") as src:
             src_text = src.read()
+            print(f"Found {len(violations)} violations in {file}:")
+
             for violation in violations:
                 source_range = violation.cursor.extent
-                print(
-                    str(violation),
-                    src_text[
-                        source_range.start.offset : source_range.end.offset
-                    ].decode(config.common.encoding),
-                )
+                try:
+                    print(
+                        str(violation),
+                        src_text[source_range.start.offset : source_range.end.offset]
+                        .decode(config.common.encoding)
+                        .replace(
+                            "\r\n",
+                            "\n",
+                        ),
+                    )
+                except UnicodeError:
+                    print(str(violation), "<Encoding Error>")
 
 
 if __name__ == "__main__":
