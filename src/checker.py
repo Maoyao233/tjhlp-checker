@@ -33,6 +33,9 @@ class ViolationKind(Enum):
     RANGE_BASED_LOOP = 12
     BIT_OPERATION = 13
     SYSTEM_CLASS = 14
+    INTERNAL_GLOBAL = 15
+    EXTERNAL_GLOBAL = 16
+    STATIC_LOCAL = 17
 
 
 class RuleViolation:
@@ -84,9 +87,7 @@ def find_all_violations(file: Path, config: Config):
             # 若包含的头文件不存在，则直接忽略
             return
 
-        if (
-            path := pathlib.Path(filename).resolve()
-        ).is_relative_to(basePath):
+        if (path := pathlib.Path(filename).resolve()).is_relative_to(basePath):
             # 本地头文件，和禁用的头文件重名可以接受
             return
 
@@ -143,6 +144,26 @@ def find_all_violations(file: Path, config: Config):
     def check_var_declaration(node: CX.Cursor):
         if type_violation_kind := check_var_type(node.type):
             rule_violations.append(RuleViolation(type_violation_kind, node))
+        # 静态全局/在匿名命名空间里的全局（除全局常变量）
+        if (
+            config.grammar.disable_internal_global_var
+            and node.linkage == CX.LinkageKind.INTERNAL
+            and not node.type.is_const_qualified()
+        ):
+            rule_violations.append(RuleViolation(ViolationKind.INTERNAL_GLOBAL, node))
+
+        if config.grammar.disable_external_global_var and node.linkage in (
+            CX.LinkageKind.EXTERNAL,
+            CX.LinkageKind.UNIQUE_EXTERNAL,
+        ):
+            rule_violations.append(RuleViolation(ViolationKind.EXTERNAL_GLOBAL, node))
+
+        if (
+            config.grammar.disable_static_local_var
+            and node.storage_class == CX.StorageClass.STATIC
+            and node.linkage == CX.LinkageKind.NO_LINKAGE
+        ):
+            rule_violations.append(RuleViolation(ViolationKind.EXTERNAL_GLOBAL, node))
 
     def check_func_declaration(node: CX.Cursor):
         if config.grammar.disable_function and node.spelling != "main":
@@ -217,7 +238,6 @@ def find_all_violations(file: Path, config: Config):
             case CK.CLASS_DECL:
                 if config.grammar.disable_class:
                     rule_violations.append(RuleViolation(ViolationKind.CLASS, node))
-            # TODO: 检查全局变量、静态局部变量
             # TODO: 检查违规使用系统函数（）
 
         children = list(

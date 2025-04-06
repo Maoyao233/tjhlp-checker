@@ -5,6 +5,7 @@ from typing import BinaryIO
 from pathlib import Path
 import codecs
 
+
 class CommonConfig(BaseModel):
     libclang_path: Path | None = None
     libclang_file: Path | None = None
@@ -47,11 +48,14 @@ class GrammarConfig(BaseModel):
     disable_loop: bool = False
     disable_range_based_loop: bool = False
     disable_bit_operation: bool = False
+    disable_external_global_var: bool = False
+    disable_internal_global_var: bool = False  # static global/in anonymous namespace
+    disable_static_local_var: bool = False
 
     class SystemClassConfig(BaseModel):
         disable: bool = False
         whitelist: list[str] = []
-    
+
     system_class: SystemClassConfig = SystemClassConfig()
 
 
