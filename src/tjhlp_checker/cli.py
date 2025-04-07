@@ -8,8 +8,10 @@ from .config import load_config
 
 
 def cli_main(
-    file: Annotated[Path, typer.Argument(help="The path of input file", exists=True)],
-    config_file: Annotated[str, typer.Option(help="The path of config file")],
+    file: Annotated[Path, typer.Argument(help="Path to input file", exists=True)],
+    config_file: Annotated[
+        Path, typer.Option(help="Path to TOML config file", prompt=True)
+    ],
 ):
     with open(config_file, "rb") as f:
         config = load_config(f)
