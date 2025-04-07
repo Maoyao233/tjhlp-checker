@@ -10,7 +10,7 @@ import clang.cindex as CX
 from clang.cindex import BinaryOperator as BO
 from clang.cindex import CursorKind as CK
 
-from config import Config
+from .config import Config
 
 #  工作基准目录，用来判定头文件是否为系统头文件（用户自定义头文件不受blacklist/whitelist限制）
 #  TODO: 由用户指定
