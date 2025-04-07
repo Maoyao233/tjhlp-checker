@@ -7,7 +7,7 @@ from .checker import find_all_violations
 from .config import load_config
 
 
-def main(
+def cli_main(
     file: Annotated[Path, typer.Argument(help="The path of input file", exists=True)],
     config_file: Annotated[str, typer.Option(help="The path of config file")],
 ):
@@ -36,5 +36,5 @@ def main(
                     print(str(violation), "<Encoding Error>")
 
 
-if __name__ == "__main__":
-    typer.run(main)
+def main():
+    typer.run(cli_main)
