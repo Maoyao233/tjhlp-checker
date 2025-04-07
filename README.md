@@ -6,7 +6,7 @@
 
 ## 构建
 
-本项目使用 ![uv](https://docs.astral.sh/uv/) 进行项目管理。
+本项目使用 [uv](https://docs.astral.sh/uv/) 进行项目管理。
 
 ```bash
 uv sync
