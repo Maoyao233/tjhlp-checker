@@ -13,6 +13,15 @@ uv sync
 uv build
 ```
 
+由于 Clang 的 Python binding 库并未包含 libclang 的二进制文件，因此使用者需要自行[安装 LLVM](https://releases.llvm.org/)，并在配置文件中设定 libclang.dll/libclang.so 所在的目录。
+
+更简便的方法是直接使用 Docker:
+
+```bash
+docker build -t tjhlp-checker .
+docker run -it tjhlp-checker
+```
+
 ## 使用
 
 ```bash
@@ -20,5 +29,3 @@ tjhlp-checker --config-file=<PATH TO CONFIG FILE> <FILE>
 ```
 
 配置文件使用 TOML 格式。具体配置项请参考 [src/tjhlp_checker/config.py]。
-
-由于 Clang 的 Python binding 库并未包含 libclang 的二进制文件，因此使用者需要自行[安装 LLVM](https://releases.llvm.org/)，并在配置文件中设定 libclang.dll/libclang.so 所在的目录。
