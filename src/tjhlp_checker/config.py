@@ -4,6 +4,7 @@ from pydantic import BaseModel, model_validator
 from typing import BinaryIO
 from pathlib import Path
 import codecs
+import os
 
 
 class CommonConfig(BaseModel):
@@ -14,8 +15,12 @@ class CommonConfig(BaseModel):
 
     @model_validator(mode="after")
     def verify(self) -> Self:
+        if not self.libclang_path and (path_env := os.environ.get("LIBCLANG_PATH")):
+            self.libclang_path = Path(path_env)
         if not self.libclang_path and not self.libclang_file:
-            raise ValueError("must set libclang_path or libclang_file")
+            raise ValueError(
+                "must set libclang_path/libclang_file, or use env variable LIBCLANG_PATH instead"
+            )
         try:
             codecs.lookup(self.encoding)
         except LookupError:
