@@ -16,7 +16,7 @@ uv build
 ## 使用
 
 ```bash
-tjhlp-checker --config-file=\<PATH TO CONFIG FILE\> \<FILE\>
+tjhlp-checker --config-file=<PATH TO CONFIG FILE> <FILE>
 ```
 
 配置文件使用 TOML 格式。具体配置项请参考 [src/tjhlp_checker/config.py]。
