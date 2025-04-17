@@ -40,13 +40,19 @@ class ViolationKind(Enum):
 class RuleViolation:
     kind: ViolationKind
     cursor: CX.Cursor
+    context: CX.Cursor
     extra_message: str
 
     def __init__(
-        self, kind: ViolationKind, cursor: CX.Cursor, extra_message: str = ""
+        self,
+        kind: ViolationKind,
+        cursor: CX.Cursor,
+        context: CX.Cursor,
+        extra_message: str = "",
     ) -> None:
         self.kind = kind
         self.cursor = cursor
+        self.context = context
         self.extra_message = extra_message
 
     def __str__(self) -> str:
@@ -77,7 +83,15 @@ def find_all_violations(file: Path, config: Config):
 
     rule_violations: list[RuleViolation] = []
 
-    def check_inclusion(node: CX.Cursor):
+    def record_violation(
+        kind: ViolationKind,
+        node: CX.Cursor,
+        context: CX.Cursor,
+        extra_message: str = "",
+    ):
+        rule_violations.append(RuleViolation(kind, node, context, extra_message))
+
+    def check_inclusion(node: CX.Cursor, context: CX.Cursor):
         assert node.kind == CK.INCLUSION_DIRECTIVE
 
         try:
@@ -93,12 +107,7 @@ def find_all_violations(file: Path, config: Config):
         if (config.header.whitelist and path.name not in config.header.whitelist) or (
             path.name in config.header.blacklist
         ):
-            rule_violations.append(
-                RuleViolation(
-                    ViolationKind.HEADER,
-                    node,
-                )
-            )
+            record_violation(ViolationKind.HEADER, node, context)
 
     def check_var_type(node_type: CX.Type):
         # 去除类型别名
@@ -140,38 +149,36 @@ def find_all_violations(file: Path, config: Config):
                 if config.grammar.disable_int64_or_larger:
                     return ViolationKind.INT64
 
-    def check_var_declaration(node: CX.Cursor):
+    def check_var_declaration(node: CX.Cursor, context: CX.Cursor):
         if type_violation_kind := check_var_type(node.type):
-            rule_violations.append(RuleViolation(type_violation_kind, node))
+            record_violation(type_violation_kind, node, context)
         # 静态全局/在匿名命名空间里的全局（除全局常变量）
         if (
             config.grammar.disable_internal_global_var
             and node.linkage == CX.LinkageKind.INTERNAL
             and not node.type.is_const_qualified()
         ):
-            rule_violations.append(RuleViolation(ViolationKind.INTERNAL_GLOBAL, node))
-
+            record_violation(ViolationKind.INTERNAL_GLOBAL, node, context)
         if config.grammar.disable_external_global_var and node.linkage in (
             CX.LinkageKind.EXTERNAL,
             CX.LinkageKind.UNIQUE_EXTERNAL,
         ):
-            rule_violations.append(RuleViolation(ViolationKind.EXTERNAL_GLOBAL, node))
-
+            record_violation(ViolationKind.EXTERNAL_GLOBAL, node, context)
         if (
             config.grammar.disable_static_local_var
             and node.storage_class == CX.StorageClass.STATIC
             and node.linkage == CX.LinkageKind.NO_LINKAGE
         ):
-            rule_violations.append(RuleViolation(ViolationKind.EXTERNAL_GLOBAL, node))
+            record_violation(ViolationKind.EXTERNAL_GLOBAL, node, context)
 
-    def check_func_declaration(node: CX.Cursor):
+    def check_func_declaration(node: CX.Cursor, context: CX.Cursor):
         if config.grammar.disable_function and node.spelling != "main":
-            rule_violations.append(RuleViolation(ViolationKind.FUNCTION, node))
+            record_violation(ViolationKind.FUNCTION, node, context)
 
         if type_violation_kind := check_var_type(node.result_type):
-            rule_violations.append(RuleViolation(type_violation_kind, node))
+            record_violation(type_violation_kind, node, context)
 
-    def check_binary_operator(node: CX.Cursor):
+    def check_binary_operator(node: CX.Cursor, context: CX.Cursor):
         match node.binary_operator:
             case (
                 BO.Shl
@@ -186,57 +193,59 @@ def find_all_violations(file: Path, config: Config):
                 | BO.XorAssign
             ):
                 if config.grammar.disable_bit_operation:
-                    rule_violations.append(
-                        RuleViolation(ViolationKind.BIT_OPERATION, node)
-                    )
+                    record_violation(ViolationKind.BIT_OPERATION, node, context)
             case BO.LAnd | BO.LE | BO.EQ | BO.NE | BO.LOr | BO.LT | BO.GT | BO.GE:
                 if config.grammar.disable_branch:
-                    rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
+                    record_violation(ViolationKind.BRANCH, node, context)
 
-    def check_unary_operator(node: CX.Cursor):
+    def check_unary_operator(node: CX.Cursor, context: CX.Cursor):
         operator_token = next(node.get_tokens())
 
         if operator_token.spelling == "!":
             if config.grammar.disable_branch:
-                rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
+                record_violation(ViolationKind.BRANCH, node, context)
         if operator_token.spelling == "~":
             if config.grammar.disable_bit_operation:
-                rule_violations.append(RuleViolation(ViolationKind.BIT_OPERATION, node))
+                record_violation(ViolationKind.BIT_OPERATION, node, context)
 
-    def traverse(node: CX.Cursor):
+    def traverse(node: CX.Cursor, context: CX.Cursor):
         match node.kind:
             case CK.INCLUSION_DIRECTIVE:
-                check_inclusion(node)
+                check_inclusion(node, context)
             case CK.VAR_DECL | CK.PARM_DECL:
-                check_var_declaration(node)
+                check_var_declaration(node, context)
             case CK.FUNCTION_DECL:
-                check_func_declaration(node)
+                context = node
+                check_func_declaration(node, context)
             case CK.BINARY_OPERATOR:
-                check_binary_operator(node)
+                check_binary_operator(node, context)
             case CK.ARRAY_SUBSCRIPT_EXPR:
                 if config.grammar.disable_array:
-                    rule_violations.append(RuleViolation(ViolationKind.ARRAY, node))
+                    record_violation(ViolationKind.ARRAY, node, context)
             case CK.CONDITIONAL_OPERATOR | CK.IF_STMT | CK.SWITCH_STMT:
                 if config.grammar.disable_branch:
-                    rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
+                    record_violation(ViolationKind.BRANCH, node, context)
             case CK.GOTO_STMT:
                 if config.grammar.disable_goto:
-                    rule_violations.append(RuleViolation(ViolationKind.GOTO, node))
+                    record_violation(ViolationKind.GOTO, node, context)
             case CK.WHILE_STMT | CK.FOR_STMT | CK.DO_STMT:
                 if config.grammar.disable_loop:
-                    rule_violations.append(RuleViolation(ViolationKind.LOOP, node))
+                    record_violation(ViolationKind.LOOP, node, context)
             case CK.UNARY_OPERATOR:
                 # TODO: 检查形如 *(p+i) 的非法指针使用
-                check_unary_operator(node)
+                check_unary_operator(node, context)
             case CK.CONDITIONAL_OPERATOR:
                 if config.grammar.disable_branch:
-                    rule_violations.append(RuleViolation(ViolationKind.BRANCH, node))
+                    record_violation(ViolationKind.BRANCH, node, context)
             case CK.STRUCT_DECL:
+                context = node
                 if config.grammar.disable_struct:
-                    rule_violations.append(RuleViolation(ViolationKind.STRUCT, node))
+                    record_violation(ViolationKind.STRUCT, node, context)
             case CK.CLASS_DECL:
+                context = node
                 if config.grammar.disable_class:
-                    rule_violations.append(RuleViolation(ViolationKind.CLASS, node))
+                    record_violation(ViolationKind.CLASS, node, context)
+            # TODO: 检查字面量和显式类型转换中违规使用 int64
             # TODO: 检查违规使用系统函数（）
 
         children = list(
@@ -246,9 +255,9 @@ def find_all_violations(file: Path, config: Config):
         )
 
         for child in children:
-            traverse(child)
+            traverse(child, context)
 
     assert tu.cursor
-    traverse(tu.cursor)
+    traverse(tu.cursor, tu.cursor)
 
     return rule_violations
