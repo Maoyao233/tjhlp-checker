@@ -3,7 +3,7 @@ from typing import Self
 from pydantic import BaseModel, model_validator
 from typing import BinaryIO
 import codecs
-
+from pathlib import Path
 
 class CommonConfig(BaseModel):
     encoding: str = "utf-8"
@@ -20,6 +20,8 @@ class CommonConfig(BaseModel):
 class HeaderConfig(BaseModel):
     blacklist: list[str] = []
     whitelist: list[str] = []
+    #  工作基准目录，用来判定头文件是否为系统头文件（用户自定义头文件不受blacklist/whitelist限制）
+    base_path: Path = Path(".")
 
     @model_validator(mode="after")
     def verify(self) -> Self:

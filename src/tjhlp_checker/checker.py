@@ -3,7 +3,6 @@
 """
 
 import os
-import pathlib
 from enum import Enum
 from pathlib import Path
 
@@ -12,10 +11,6 @@ from clang.cindex import BinaryOperator as BO
 from clang.cindex import CursorKind as CK
 
 from .config import Config
-
-#  工作基准目录，用来判定头文件是否为系统头文件（用户自定义头文件不受blacklist/whitelist限制）
-#  TODO: 由用户指定
-basePath = Path.cwd()
 
 
 class ViolationKind(Enum):
@@ -68,8 +63,10 @@ def find_all_violations(file: Path, config: Config):
     if not CX.Config.loaded:
         libclang_path = os.environ.get("LIBCLANG_PATH")
         if not libclang_path:
-            raise RuntimeError("Cannot find libclang installation. Please make sure LLVM is installed and env variable 'LIBCLANG_PATH' is set correctlly.")
-        
+            raise RuntimeError(
+                "Cannot find libclang installation. Please make sure LLVM is installed and env variable 'LIBCLANG_PATH' is set correctlly."
+            )
+
         CX.Config.set_library_path(libclang_path)
 
     parse_options = CX.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
@@ -102,7 +99,9 @@ def find_all_violations(file: Path, config: Config):
             # 若包含的头文件不存在，则直接忽略
             return
 
-        if (path := pathlib.Path(filename).resolve()).is_relative_to(basePath):
+        if (path := Path(filename).resolve()).is_relative_to(
+            config.header.base_path
+        ):
             # 本地头文件，和禁用的头文件重名可以接受
             return
 
