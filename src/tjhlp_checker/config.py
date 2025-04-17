@@ -2,25 +2,14 @@ import tomllib
 from typing import Self
 from pydantic import BaseModel, model_validator
 from typing import BinaryIO
-from pathlib import Path
 import codecs
-import os
 
 
 class CommonConfig(BaseModel):
-    libclang_path: Path | None = None
-    libclang_file: Path | None = None
     encoding: str = "utf-8"
-    debug: bool = False
 
     @model_validator(mode="after")
     def verify(self) -> Self:
-        if not self.libclang_path and (path_env := os.environ.get("LIBCLANG_PATH")):
-            self.libclang_path = Path(path_env)
-        if not self.libclang_path and not self.libclang_file:
-            raise ValueError(
-                "must set libclang_path/libclang_file, or use env variable LIBCLANG_PATH instead"
-            )
         try:
             codecs.lookup(self.encoding)
         except LookupError:
@@ -63,7 +52,7 @@ class GrammarConfig(BaseModel):
 
 
 class Config(BaseModel):
-    common: CommonConfig
+    common: CommonConfig = CommonConfig()
     header: HeaderConfig = HeaderConfig()
     grammar: GrammarConfig = GrammarConfig()
 
