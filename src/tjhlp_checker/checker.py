@@ -77,7 +77,7 @@ def find_all_violations(file: Path, config: Config):
     tu = index.parse(
         str(file.resolve()),
         options=parse_options,
-        args=[f"-finput-charset={config.common.encoding}"],
+        args=[f"-finput-charset={config.common.encoding}"] + (["-m32"] if config.common.is_32bit else []),
     )
 
     rule_violations: list[RuleViolation] = []

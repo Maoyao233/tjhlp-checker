@@ -7,6 +7,7 @@ from pathlib import Path
 
 class CommonConfig(BaseModel):
     encoding: str = "utf-8"
+    is_32bit: bool = False
 
     @model_validator(mode="after")
     def verify(self) -> Self:
