@@ -213,7 +213,7 @@ def find_all_violations(file: Path, config: Config):
         match node.kind:
             case CK.INCLUSION_DIRECTIVE:
                 check_inclusion(node, context)
-            case CK.VAR_DECL | CK.PARM_DECL:
+            case CK.VAR_DECL | CK.PARM_DECL | CK.FIELD_DECL:
                 check_var_declaration(node, context)
             case CK.FUNCTION_DECL:
                 context = node
