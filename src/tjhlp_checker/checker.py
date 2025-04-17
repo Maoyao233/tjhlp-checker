@@ -246,7 +246,10 @@ def find_all_violations(file: Path, config: Config):
                 context = node
                 if config.grammar.disable_class:
                     record_violation(ViolationKind.CLASS, node, context)
-            # TODO: 检查字面量和显式类型转换中违规使用 int64
+            case CK.INTEGER_LITERAL:
+                if vk := check_var_type(node.type):
+                    record_violation(vk, node, context)
+            # TODO: 检查显式类型转换中违规使用 int64
             # TODO: 检查违规使用系统函数（）
 
         children = list(
