@@ -110,7 +110,7 @@ def find_all_violations(file: Path, config: Config):
         ):
             record_violation(ViolationKind.HEADER, node, context)
 
-    def check_var_type(node_type: CX.Type):
+    def check_var_type(node_type: CX.Type) -> ViolationKind | None:
         # 去除类型别名
         canonical_type = node_type.get_canonical()
 
@@ -138,13 +138,13 @@ def find_all_violations(file: Path, config: Config):
                 if config.grammar.disable_pointers:
                     return ViolationKind.POINTER
                 # 递归检查指向的类型
-                check_var_type(canonical_type.get_pointee())
+                return check_var_type(canonical_type.get_pointee())
             # 引用
             case CX.TypeKind.LVALUEREFERENCE | CX.TypeKind.RVALUEREFERENCE:
                 if config.grammar.disable_reference:
                     return ViolationKind.REFERENCE
                 # 递归检查指向的类型
-                check_var_type(canonical_type.get_pointee())
+                return check_var_type(canonical_type.get_pointee())
             # 64位/128位整数
             case CX.TypeKind.LONGLONG | CX.TypeKind.ULONGLONG | CX.TypeKind.INT128:
                 if config.grammar.disable_int64_or_larger:
