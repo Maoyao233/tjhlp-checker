@@ -64,11 +64,12 @@ class RuleViolation:
 
 
 def find_all_violations(file: Path, config: Config):
-    if config.common.libclang_file:
-        CX.Config.set_library_file(config.common.libclang_file)
+    if not CX.Config.loaded:
+        if config.common.libclang_file:
+            CX.Config.set_library_file(config.common.libclang_file)
 
-    if config.common.libclang_path:
-        CX.Config.set_library_path(config.common.libclang_path)
+        if config.common.libclang_path:
+            CX.Config.set_library_path(config.common.libclang_path)
 
     parse_options = CX.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
     if file.name.endswith((".h", ".hpp")):
