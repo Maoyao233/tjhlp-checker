@@ -145,6 +145,13 @@ def find_all_violations(file: Path, config: Config):
                     return ViolationKind.REFERENCE
                 # 递归检查指向的类型
                 return check_var_type(canonical_type.get_pointee())
+            # 函数
+            case CX.TypeKind.FUNCTIONPROTO:
+                if config.grammar.disable_function:
+                    return ViolationKind.FUNCTION
+                return check_var_type(canonical_type.get_result()) or next(
+                    filter(lambda vio: vio is not None, map(check_var_type, canonical_type.argument_types())), None # type: ignore
+                )
             # 64位/128位整数
             case CX.TypeKind.LONGLONG | CX.TypeKind.ULONGLONG | CX.TypeKind.INT128:
                 if config.grammar.disable_int64_or_larger:
@@ -176,7 +183,7 @@ def find_all_violations(file: Path, config: Config):
         if config.grammar.disable_function and node.spelling != "main":
             record_violation(ViolationKind.FUNCTION, node, context)
 
-        if type_violation_kind := check_var_type(node.result_type):
+        if type_violation_kind := check_var_type(node.type):
             record_violation(type_violation_kind, node, context)
 
     def check_binary_operator(node: CX.Cursor, context: CX.Cursor):
@@ -213,7 +220,7 @@ def find_all_violations(file: Path, config: Config):
         match node.kind:
             case CK.INCLUSION_DIRECTIVE:
                 check_inclusion(node, context)
-            case CK.VAR_DECL | CK.PARM_DECL | CK.FIELD_DECL:
+            case CK.VAR_DECL | CK.FIELD_DECL:
                 check_var_declaration(node, context)
             case CK.FUNCTION_DECL:
                 context = node
