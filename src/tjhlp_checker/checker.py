@@ -77,7 +77,8 @@ def find_all_violations(file: Path, config: Config):
     tu = index.parse(
         str(file.resolve()),
         options=parse_options,
-        args=[f"-finput-charset={config.common.encoding}"] + (["-m32"] if config.common.is_32bit else []),
+        args=[f"-finput-charset={config.common.encoding}"]
+        + (["-m32"] if config.common.is_32bit else []),
     )
 
     rule_violations: list[RuleViolation] = []
@@ -99,9 +100,7 @@ def find_all_violations(file: Path, config: Config):
             # 若包含的头文件不存在，则直接忽略
             return
 
-        if (path := Path(filename).resolve()).is_relative_to(
-            config.header.base_path
-        ):
+        if (path := Path(filename).resolve()).is_relative_to(config.header.base_path):
             # 本地头文件，和禁用的头文件重名可以接受
             return
 
@@ -132,7 +131,6 @@ def find_all_violations(file: Path, config: Config):
                     return ViolationKind.ARRAY
                 # 递归检查数组元素
                 return check_var_type(canonical_type.element_type)
-
             # 检查是否指针
             case CX.TypeKind.POINTER:
                 if config.grammar.disable_pointer:
