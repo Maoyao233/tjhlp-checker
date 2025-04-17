@@ -135,7 +135,7 @@ def find_all_violations(file: Path, config: Config):
 
             # 检查是否指针
             case CX.TypeKind.POINTER:
-                if config.grammar.disable_pointers:
+                if config.grammar.disable_pointer:
                     return ViolationKind.POINTER
                 # 递归检查指向的类型
                 return check_var_type(canonical_type.get_pointee())

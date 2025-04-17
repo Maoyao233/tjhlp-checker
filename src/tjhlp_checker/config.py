@@ -33,7 +33,7 @@ class HeaderConfig(BaseModel):
 
 class GrammarConfig(BaseModel):
     disable_int64_or_larger: bool = False
-    disable_pointers: bool = False
+    disable_pointer: bool = False
     disable_reference: bool = False
     disable_array: bool = False
     disable_struct: bool = False
