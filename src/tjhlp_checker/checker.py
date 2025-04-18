@@ -185,7 +185,7 @@ def find_all_violations(file: Path, config: Config):
             and node.storage_class == CX.StorageClass.STATIC
             and node.linkage == CX.LinkageKind.NO_LINKAGE
         ):
-            record_violation(ViolationKind.EXTERNAL_GLOBAL, node, context)
+            record_violation(ViolationKind.STATIC_LOCAL, node, context)
 
     def check_func_declaration(node: CX.Cursor, context: CX.Cursor):
         if config.grammar.disable_function and node.spelling != "main":
