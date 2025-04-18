@@ -37,6 +37,7 @@ blacklist = ["vector", "array"]
 whitelist = ["iostream"]
 """
 
+
 def test_ambiguous_config():
     with pytest.raises(ValidationError):
         load_config(BytesIO(AMBIGUOUS_CONFIG_CONTENT))
@@ -54,7 +55,15 @@ def cpp_file(tmp_path):
 
 
 def test_blacklist(cpp_file, tmp_path):
-    violations = find_all_violations(cpp_file, load_config(BytesIO(BLACKLIST_CONFIG_CONTENT + f'base_path = "{tmp_path.as_posix()}"'.encode())))
+    violations = find_all_violations(
+        cpp_file,
+        load_config(
+            BytesIO(
+                BLACKLIST_CONFIG_CONTENT
+                + f'base_path = "{tmp_path.as_posix()}"'.encode()
+            )
+        ),
+    )
     assert len(violations) == 2
 
     assert all(vio.kind == ViolationKind.HEADER for vio in violations)
@@ -67,5 +76,7 @@ def test_blacklist(cpp_file, tmp_path):
 
 
 def test_whitelist(cpp_file):
-    violations = find_all_violations(cpp_file, load_config(BytesIO(WHITELIST_CONFIG_CONTENT)))
+    violations = find_all_violations(
+        cpp_file, load_config(BytesIO(WHITELIST_CONFIG_CONTENT))
+    )
     assert len(violations) == 6
