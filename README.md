@@ -1,6 +1,6 @@
 # TJHLP-CHECKER 同济高程代码合规检查
 
-[![Continuous Integration](https://github.com/Maoyao233/tjhlp-checker/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/Maoyao233/tjhlp-checker/actions/workflows/continuous-integration.yml)  [![cov](https://Maoyao233.github.io/tjhlp-checker/badges/coverage.svg)](https://github.com/Maoyao233/tjhlp-checker/actions)  ![PyPI - Version](https://img.shields.io/pypi/v/tjhlp-checker)
+[![Continuous Integration](https://github.com/Maoyao233/tjhlp-checker/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/Maoyao233/tjhlp-checker/actions/workflows/continuous-integration.yml)  [![cov](https://Maoyao233.github.io/tjhlp-checker/badges/coverage.svg)](https://github.com/Maoyao233/tjhlp-checker/actions)  [![PyPI - Version](https://img.shields.io/pypi/v/tjhlp-checker)](https://pypi.org/project/tjhlp-checker/)
 
 ## 简介
 
