@@ -26,6 +26,7 @@ jobs:
         tools: gcc-multilib g++-multilib
         method: timestamp
         cache: yes
+        path: /etc /usr/bin /usr/sbin /usr/lib /usr/share /var/lib /usr/include
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
