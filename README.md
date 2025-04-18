@@ -13,7 +13,7 @@ uv sync
 uv build
 ```
 
-由于 Clang 的 Python binding 库并未包含 libclang 的二进制文件，因此使用者需要自行[安装 LLVM](https://releases.llvm.org/)，并在配置文件中设定 libclang.dll/libclang.so 所在的目录。
+由于 Clang 的 Python binding 库并未包含 libclang 的二进制文件，因此使用者需要自行[安装 LLVM](https://releases.llvm.org/)，并正确设置环境变量 `LIBCLANG_PATH` 为 libclang.dll/libclang.so 所在的目录。
 
 更简便的方法是直接使用 Docker:
 
