@@ -34,7 +34,7 @@ jobs:
         uv tool run ruff check --output-format=github
     - name: Format with ruff
       run: |
-        uv tool run ruff format --diff --output-format=github
+        uv tool run ruff format --diff
     - name: Test with pytest
       run: |
         uv run pytest --cov --cov-report json
