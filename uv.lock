@@ -227,6 +227,10 @@ source = { editable = "." }
 dependencies = [
     { name = "clang" },
     { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+cli = [
     { name = "typer" },
 ]
 
@@ -240,8 +244,9 @@ dev = [
 requires-dist = [
     { name = "clang", specifier = ">=20.1.0" },
     { name = "pydantic", specifier = ">=2.11.1" },
-    { name = "typer", specifier = ">=0.15.2" },
+    { name = "typer", marker = "extra == 'cli'", specifier = ">=0.15.2" },
 ]
+provides-extras = ["cli"]
 
 [package.metadata.requires-dev]
 dev = [

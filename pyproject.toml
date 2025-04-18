@@ -1,17 +1,21 @@
 [project]
 name = "tjhlp-checker"
 version = "0.1.0"
-description = "Add your description here"
+description = "This project is a code inspection tool for teaching purposes in the \"High-level Language Programming\" course at Tongji University, used to check whether C/C++ code uses syntax features that violate assignment requirements."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "clang>=20.1.0",
     "pydantic>=2.11.1",
-    "typer>=0.15.2",
 ]
 
 [project.scripts]
-tjhlp-checker = "tjhlp_checker.cli:main"
+tjhlp-checker = "tjhlp_checker.cli:main [cli]"
+
+[project.optional-dependencies]
+cli = [
+    "typer>=0.15.2",
+]
 
 [build-system]
 requires = ["hatchling"]

@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import Annotated
 
-import typer
+try:
+    import typer
+except ImportError:
+    raise RuntimeError('Cannot find dependency "typer". Please install "tjhlp-checker[cli]" for this module.')
 
 from .checker import find_all_violations
 from .config import load_config
