@@ -145,8 +145,18 @@ def find_all_violations(file: Path, config: Config):
                     None,
                 )
             # 64位/128位整数
-            case CX.TypeKind.LONGLONG | CX.TypeKind.ULONGLONG | CX.TypeKind.INT128:
-                if config.grammar.disable_int64_or_larger:
+            # 注意: 64 位 Linux 下, long/unsigned long 也是 64 位整数
+            case (
+                CX.TypeKind.LONGLONG
+                | CX.TypeKind.ULONGLONG
+                | CX.TypeKind.INT128
+                | CX.TypeKind.LONG
+                | CX.TypeKind.ULONG
+            ):
+                if (
+                    config.grammar.disable_int64_or_larger
+                    and canonical_type.get_size() >= 8
+                ):
                     return ViolationKind.INT64
 
     def check_var_declaration(node: CX.Cursor, context: CX.Cursor):

@@ -5,7 +5,7 @@ import pytest
 from tjhlp_checker import ViolationKind, find_all_violations, load_config
 
 CPP_CONTENT = """\
-#include <cstdint>
+#include <stdint.h>
 #include <cstddef>
 
 // 直接使用
