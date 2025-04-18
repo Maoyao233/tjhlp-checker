@@ -27,9 +27,9 @@ arr_of_intptr arr;
 
 // 作为函数参数/返回值, 使用系统提供的类型别名
 // 同一个类型中只计第一个发现的违规
-uint64_t fun(int64_t x) {
+uint64_t fun(int64_t* x) {
     // 显式类型转换
-    int y = static_cast<uint64_t>(x);
+    int y = static_cast<uint64_t>(x[0]);
     // 使用字面量
     return y + 42ull;
 }
@@ -105,6 +105,21 @@ def test_reference(cpp_file):
                 b"""\
 [grammar]
 disable_reference = true
+"""
+            )
+        ),
+    )
+    assert len(violations) == 4
+
+
+def test_array(cpp_file):
+    violations = find_all_violations(
+        cpp_file,
+        load_config(
+            BytesIO(
+                b"""\
+[grammar]
+disable_array = true
 """
             )
         ),
