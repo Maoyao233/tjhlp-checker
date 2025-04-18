@@ -279,6 +279,7 @@ def find_all_violations(file: Path, config: Config):
         for child in children:
             traverse(child, context)
 
+    print(list(tu.diagnostics))
     assert tu.cursor
     traverse(tu.cursor, tu.cursor)
 
