@@ -148,7 +148,11 @@ def find_all_violations(file: Path, config: Config):
                 if config.grammar.disable_function:
                     return ViolationKind.FUNCTION
                 return check_var_type(canonical_type.get_result()) or next(
-                    filter(lambda vio: vio is not None, map(check_var_type, canonical_type.argument_types())), None # type: ignore
+                    filter(
+                        lambda vio: vio is not None,
+                        map(check_var_type, canonical_type.argument_types()),  # type: ignore
+                    ),
+                    None,
                 )
             # 64位/128位整数
             case CX.TypeKind.LONGLONG | CX.TypeKind.ULONGLONG | CX.TypeKind.INT128:
