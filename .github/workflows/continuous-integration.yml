@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [ "master" ]
 
+env:
+  LIBCLANG_PATH: /lib/x86_64-linux-gnu/
+
 jobs:
   build:
 
@@ -20,6 +23,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v2
+      with:
+        version: "20.1"
+    - name: Symlink libclang.so (Linux)
+      if: contains(matrix.os, 'ubuntu')
+      run: sudo ln -s libclang-20.so.1 /lib/x86_64-linux-gnu/libclang.so
+      working-directory: ${{ env.LLVM_PATH }}/lib
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
