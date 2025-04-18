@@ -18,6 +18,7 @@ CPP_CONTENT = """\
 #include <algorithm>
 #include "my_header.h"
 #include "queue" // 自定义头文件与系统头文件重名
+#include <1ostream> // 不存在的头文件
 """
 
 BLACKLIST_CONFIG_CONTENT = b"""\
