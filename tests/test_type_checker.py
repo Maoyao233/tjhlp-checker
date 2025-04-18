@@ -94,7 +94,7 @@ disable_pointer = true
             )
         ),
     )
-    assert len(violations) == 7
+    assert len(violations) == 8
 
 
 def test_reference(cpp_file):
