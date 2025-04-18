@@ -20,6 +20,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install g++-multilib
+      uses: tecolicom/actions-use-apt-tools@v1
+      with:
+        tools: g++-multilib
+        cache: yes
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
