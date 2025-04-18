@@ -4,6 +4,7 @@
 """
 
 from enum import Enum
+from itertools import islice
 from pathlib import Path
 
 import clang.cindex as CX
@@ -125,8 +126,15 @@ def find_all_violations(file: Path, config: Config):
             case CX.TypeKind.POINTER:
                 if config.grammar.disable_pointer:
                     return ViolationKind.POINTER
+                pointee = canonical_type.get_pointee()
+                if (
+                    config.grammar.disable_function
+                    and pointee.get_canonical().kind == CX.TypeKind.FUNCTIONPROTO
+                ):
+                    # 如果不允许函数，同样不允许指向函数的指针
+                    return ViolationKind.FUNCTION
                 # 递归检查指向的类型
-                return check_var_type(canonical_type.get_pointee())
+                return check_var_type(pointee)
             # 引用
             case CX.TypeKind.LVALUEREFERENCE | CX.TypeKind.RVALUEREFERENCE:
                 if config.grammar.disable_reference:
@@ -135,8 +143,6 @@ def find_all_violations(file: Path, config: Config):
                 return check_var_type(canonical_type.get_pointee())
             # 函数
             case CX.TypeKind.FUNCTIONPROTO:
-                if config.grammar.disable_function:
-                    return ViolationKind.FUNCTION
                 return check_var_type(canonical_type.get_result()) or next(
                     filter(
                         lambda vio: vio is not None,
@@ -189,7 +195,16 @@ def find_all_violations(file: Path, config: Config):
             record_violation(type_violation_kind, node, context)
 
     def check_binary_operator(node: CX.Cursor, context: CX.Cursor):
-        match node.spelling:
+        # 理论上来说，libclang 暴露了 BinaryOpCode
+        # 然而当前版本的 Python Binding 并没有这个接口
+        # 于是只能用笨办法来获取算符：
+        tokens = node.get_tokens()
+        left_child_token_count = len(list(next(node.get_children()).get_tokens()))
+        operator = next(
+            islice(tokens, left_child_token_count, left_child_token_count + 1)
+        )
+        assert operator.kind == CX.TokenKind.PUNCTUATION  # type: ignore
+        match operator.spelling:
             case "<<" | "<<=" | ">>" | ">>=" | "&" | "&=" | "|" | "|=" | "^" | "^=":
                 if config.grammar.disable_bit_operation:
                     record_violation(ViolationKind.BIT_OPERATION, node, context)
@@ -216,7 +231,7 @@ def find_all_violations(file: Path, config: Config):
             case CK.FUNCTION_DECL:
                 context = node
                 check_func_declaration(node, context)
-            case CK.BINARY_OPERATOR:
+            case CK.BINARY_OPERATOR | CK.COMPOUND_ASSIGNMENT_OPERATOR:
                 check_binary_operator(node, context)
             case CK.ARRAY_SUBSCRIPT_EXPR:
                 if config.grammar.disable_array:
