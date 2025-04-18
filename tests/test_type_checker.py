@@ -72,7 +72,6 @@ is_32bit = {"true" if arch == "x86" else "false"}
         ),
     )
 
-    print(violations)
     # 32bit 模式下, size_t 是四字节，不违规
     if arch == "x86":
         # a, b, pb, c, fun, static_cast, 42ull, p, T::l
