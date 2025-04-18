@@ -28,8 +28,10 @@ arr_of_intptr arr;
 // 作为函数参数/返回值, 使用系统提供的类型别名
 // 同一个类型中只计第一个发现的违规
 uint64_t fun(int64_t x) {
+    // 显式类型转换
+    int y = static_cast<uint64_t>(x);
     // 使用字面量
-    return 42ull;
+    return y + 42ull;
 }
 
 // 复杂类型的组成部分
@@ -73,10 +75,10 @@ is_32bit = {"true" if arch == "x86" else "false"}
     print(violations)
     # 32bit 模式下, size_t 是四字节，不违规
     if arch == "x86":
-        # a, b, pb, c, fun, 42ull, p, T::l
-        assert len(violations) == 8
-    else:
+        # a, b, pb, c, fun, static_cast, 42ull, p, T::l
         assert len(violations) == 9
+    else:
+        assert len(violations) == 10
 
     assert all(vio.kind == ViolationKind.INT64 for vio in violations)
 
