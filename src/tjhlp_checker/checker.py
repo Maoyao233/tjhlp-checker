@@ -1,5 +1,6 @@
 """
 同济高程代码合规检查
+由于 libclang 18.1.1 库的类型标注不够完善, 会出现无法识别枚举类型成员的错误，可以忽略或者手动修正
 """
 
 import os
@@ -7,7 +8,6 @@ from enum import Enum
 from pathlib import Path
 
 import clang.cindex as CX
-from clang.cindex import BinaryOperator as BO
 from clang.cindex import CursorKind as CK
 
 from .config import Config
@@ -189,22 +189,12 @@ def find_all_violations(file: Path, config: Config):
             record_violation(type_violation_kind, node, context)
 
     def check_binary_operator(node: CX.Cursor, context: CX.Cursor):
-        match node.binary_operator:
-            case (
-                BO.Shl
-                | BO.ShlAssign
-                | BO.Shr
-                | BO.ShrAssign
-                | BO.And
-                | BO.AndAssign
-                | BO.Or
-                | BO.OrAssign
-                | BO.Xor
-                | BO.XorAssign
-            ):
+        match node.spelling:
+            case "<<" | "<<=" | ">>" | ">>=" | "&" | "&=" | "|" | "|=" | "^" | "^=":
                 if config.grammar.disable_bit_operation:
                     record_violation(ViolationKind.BIT_OPERATION, node, context)
-            case BO.LAnd | BO.LE | BO.EQ | BO.NE | BO.LOr | BO.LT | BO.GT | BO.GE:
+            case "&&" | "||" | "<" | "<=" | "==" | "!=" | ">" | ">=" | "<=>":
+                node.binary_operator
                 if config.grammar.disable_branch:
                     record_violation(ViolationKind.BRANCH, node, context)
 
