@@ -2,12 +2,15 @@ from io import BytesIO
 
 import pytest
 
-from tjhlp_checker import find_all_violations, load_config
+from tjhlp_checker import find_all_violations, load_config, ViolationKind
+from tjhlp_checker.config import Config, GrammarConfig
 
 CPP_CONTENT = """\
 int x;
 
 static int y;
+
+inline int v;
 
 namespace {
     double z;
@@ -147,3 +150,25 @@ disable_function = true
         ),
     )
     assert len(violations) == 10
+
+
+def test_global_and_static_local(cpp_file):
+    violations = find_all_violations(
+        cpp_file,
+        Config(
+            grammar=GrammarConfig(
+                disable_external_global_var=True,
+                disable_internal_global_var=True,
+                disable_static_local_var=True,
+            )
+        ),
+    )
+    assert len(violations) == 5
+    print(violations)
+    assert (
+        sum(1 for vio in violations if vio.kind == ViolationKind.EXTERNAL_GLOBAL) == 2
+    )
+    assert (
+        sum(1 for vio in violations if vio.kind == ViolationKind.INTERNAL_GLOBAL) == 2
+    )
+    assert sum(1 for vio in violations if vio.kind == ViolationKind.STATIC_LOCAL) == 1
