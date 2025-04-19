@@ -4,13 +4,14 @@
 """
 
 from enum import Enum
-from itertools import islice
 from pathlib import Path
 
 import clang.cindex as CX
 from clang.cindex import CursorKind as CK
 
 from .config import Config
+from .libclang_patch import BinaryOperator as BO
+from .libclang_patch import UnaryOperator as UO
 
 
 class ViolationKind(Enum):
@@ -195,32 +196,33 @@ def find_all_violations(file: Path, config: Config):
             record_violation(type_violation_kind, node, context)
 
     def check_binary_operator(node: CX.Cursor, context: CX.Cursor):
-        # 理论上来说，libclang 暴露了 BinaryOpCode
-        # 然而当前版本的 Python Binding 并没有这个接口
-        # 于是只能用笨办法来获取算符：
-        tokens = node.get_tokens()
-        left_child_token_count = len(list(next(node.get_children()).get_tokens()))
-        operator = next(
-            islice(tokens, left_child_token_count, left_child_token_count + 1)
-        )
-        assert operator.kind == CX.TokenKind.PUNCTUATION  # type: ignore
-        match operator.spelling:
-            case "<<" | "<<=" | ">>" | ">>=" | "&" | "&=" | "|" | "|=" | "^" | "^=":
+        match node.binary_operator:
+            case (
+                BO.Shl
+                | BO.ShlAssign
+                | BO.Shr
+                | BO.ShrAssign
+                | BO.And
+                | BO.AndAssign
+                | BO.Or
+                | BO.OrAssign
+                | BO.Xor
+                | BO.XorAssign
+            ):
                 if config.grammar.disable_bit_operation:
                     record_violation(ViolationKind.BIT_OPERATION, node, context)
-            case "&&" | "||" | "<" | "<=" | "==" | "!=" | ">" | ">=" | "<=>":
+            case BO.LAnd | BO.LE | BO.EQ | BO.NE | BO.LOr | BO.LT | BO.GT | BO.GE:
                 if config.grammar.disable_branch:
                     record_violation(ViolationKind.BRANCH, node, context)
 
     def check_unary_operator(node: CX.Cursor, context: CX.Cursor):
-        operator_token = next(node.get_tokens())
-
-        if operator_token.spelling == "!":
-            if config.grammar.disable_branch:
-                record_violation(ViolationKind.BRANCH, node, context)
-        if operator_token.spelling == "~":
-            if config.grammar.disable_bit_operation:
-                record_violation(ViolationKind.BIT_OPERATION, node, context)
+        match node.unary_operator:
+            case UO.LNot:
+                if config.grammar.disable_branch:
+                    record_violation(ViolationKind.BRANCH, node, context)
+            case UO.Not:
+                if config.grammar.disable_bit_operation:
+                    record_violation(ViolationKind.BIT_OPERATION, node, context)
 
     def traverse(node: CX.Cursor, context: CX.Cursor):
         match node.kind:
