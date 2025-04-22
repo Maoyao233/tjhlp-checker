@@ -5,6 +5,7 @@
 
 from enum import Enum
 from pathlib import Path
+from typing import Generator
 
 import clang.cindex as CX
 from clang.cindex import CursorKind as CK
@@ -60,7 +61,7 @@ class RuleViolation:
         return str(self)
 
 
-def find_all_violations(file: Path, config: Config):
+def find_all_violations(file: Path, config: Config) -> Generator[RuleViolation]:
     parse_options = CX.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
     if file.name.endswith((".h", ".hpp")):
         parse_options |= CX.TranslationUnit.PARSE_INCOMPLETE
@@ -73,17 +74,9 @@ def find_all_violations(file: Path, config: Config):
         + (["-m32"] if config.common.is_32bit else []),
     )
 
-    rule_violations: list[RuleViolation] = []
-
-    def record_violation(
-        kind: ViolationKind,
-        node: CX.Cursor,
-        context: CX.Cursor,
-        extra_message: str = "",
-    ):
-        rule_violations.append(RuleViolation(kind, node, context, extra_message))
-
-    def check_inclusion(node: CX.Cursor, context: CX.Cursor):
+    def check_inclusion(
+        node: CX.Cursor, context: CX.Cursor
+    ) -> Generator[RuleViolation]:
         assert node.kind == CK.INCLUSION_DIRECTIVE
 
         try:
@@ -99,7 +92,7 @@ def find_all_violations(file: Path, config: Config):
         if (config.header.whitelist and path.name not in config.header.whitelist) or (
             path.name in config.header.blacklist
         ):
-            record_violation(ViolationKind.HEADER, node, context)
+            yield RuleViolation(ViolationKind.HEADER, node, context)
 
     def check_var_type(node_type: CX.Type) -> ViolationKind | None:
         # 去除类型别名
@@ -168,32 +161,32 @@ def find_all_violations(file: Path, config: Config):
 
     def check_var_declaration(node: CX.Cursor, context: CX.Cursor):
         if type_violation_kind := check_var_type(node.type):
-            record_violation(type_violation_kind, node, context)
+            yield RuleViolation(type_violation_kind, node, context)
         # 静态全局/在匿名命名空间里的全局（除全局常变量）
         if (
             config.grammar.disable_internal_global_var
             and node.linkage == CX.LinkageKind.INTERNAL
             and not node.type.is_const_qualified()
         ):
-            record_violation(ViolationKind.INTERNAL_GLOBAL, node, context)
+            yield RuleViolation(ViolationKind.INTERNAL_GLOBAL, node, context)
         if config.grammar.disable_external_global_var and node.linkage in (
             CX.LinkageKind.EXTERNAL,
             CX.LinkageKind.UNIQUE_EXTERNAL,
         ):
-            record_violation(ViolationKind.EXTERNAL_GLOBAL, node, context)
+            yield RuleViolation(ViolationKind.EXTERNAL_GLOBAL, node, context)
         if (
             config.grammar.disable_static_local_var
             and node.storage_class == CX.StorageClass.STATIC
             and node.linkage == CX.LinkageKind.NO_LINKAGE
         ):
-            record_violation(ViolationKind.STATIC_LOCAL, node, context)
+            yield RuleViolation(ViolationKind.STATIC_LOCAL, node, context)
 
     def check_func_declaration(node: CX.Cursor, context: CX.Cursor):
         if config.grammar.disable_function and node.spelling != "main":
-            record_violation(ViolationKind.FUNCTION, node, context)
+            yield RuleViolation(ViolationKind.FUNCTION, node, context)
 
         if type_violation_kind := check_var_type(node.type):
-            record_violation(type_violation_kind, node, context)
+            yield RuleViolation(type_violation_kind, node, context)
 
     def check_binary_operator(node: CX.Cursor, context: CX.Cursor):
         match node.binary_operator:
@@ -210,54 +203,54 @@ def find_all_violations(file: Path, config: Config):
                 | BO.XorAssign
             ):
                 if config.grammar.disable_bit_operation:
-                    record_violation(ViolationKind.BIT_OPERATION, node, context)
+                    yield RuleViolation(ViolationKind.BIT_OPERATION, node, context)
             case BO.LAnd | BO.LE | BO.EQ | BO.NE | BO.LOr | BO.LT | BO.GT | BO.GE:
                 if config.grammar.disable_branch:
-                    record_violation(ViolationKind.BRANCH, node, context)
+                    yield RuleViolation(ViolationKind.BRANCH, node, context)
 
     def check_unary_operator(node: CX.Cursor, context: CX.Cursor):
         match node.unary_operator:
             case UO.LNot:
                 if config.grammar.disable_branch:
-                    record_violation(ViolationKind.BRANCH, node, context)
+                    yield RuleViolation(ViolationKind.BRANCH, node, context)
             case UO.Not:
                 if config.grammar.disable_bit_operation:
-                    record_violation(ViolationKind.BIT_OPERATION, node, context)
+                    yield RuleViolation(ViolationKind.BIT_OPERATION, node, context)
 
     def traverse(node: CX.Cursor, context: CX.Cursor):
         match node.kind:
             case CK.INCLUSION_DIRECTIVE:
-                check_inclusion(node, context)
+                yield from check_inclusion(node, context)
             case CK.VAR_DECL | CK.FIELD_DECL:
-                check_var_declaration(node, context)
+                yield from check_var_declaration(node, context)
             case CK.FUNCTION_DECL:
                 context = node
-                check_func_declaration(node, context)
+                yield from check_func_declaration(node, context)
             case CK.BINARY_OPERATOR | CK.COMPOUND_ASSIGNMENT_OPERATOR:
-                check_binary_operator(node, context)
+                yield from check_binary_operator(node, context)
             case CK.ARRAY_SUBSCRIPT_EXPR:
                 if config.grammar.disable_array:
-                    record_violation(ViolationKind.ARRAY, node, context)
+                    yield RuleViolation(ViolationKind.ARRAY, node, context)
             case CK.CONDITIONAL_OPERATOR | CK.IF_STMT | CK.SWITCH_STMT:
                 if config.grammar.disable_branch:
-                    record_violation(ViolationKind.BRANCH, node, context)
+                    yield RuleViolation(ViolationKind.BRANCH, node, context)
             case CK.GOTO_STMT:
                 if config.grammar.disable_goto:
-                    record_violation(ViolationKind.GOTO, node, context)
+                    yield RuleViolation(ViolationKind.GOTO, node, context)
             case CK.WHILE_STMT | CK.FOR_STMT | CK.DO_STMT:
                 if config.grammar.disable_loop:
-                    record_violation(ViolationKind.LOOP, node, context)
+                    yield RuleViolation(ViolationKind.LOOP, node, context)
             case CK.UNARY_OPERATOR:
                 # TODO: 检查形如 *(p+i) 的非法指针使用
-                check_unary_operator(node, context)
+                yield from check_unary_operator(node, context)
             case CK.STRUCT_DECL:
                 context = node
                 if config.grammar.disable_struct:
-                    record_violation(ViolationKind.STRUCT, node, context)
+                    yield RuleViolation(ViolationKind.STRUCT, node, context)
             case CK.CLASS_DECL:
                 context = node
                 if config.grammar.disable_class:
-                    record_violation(ViolationKind.CLASS, node, context)
+                    yield RuleViolation(ViolationKind.CLASS, node, context)
             case (
                 CK.INTEGER_LITERAL
                 | CK.CSTYLE_CAST_EXPR
@@ -266,7 +259,7 @@ def find_all_violations(file: Path, config: Config):
                 | CK.CXX_REINTERPRET_CAST_EXPR
             ):
                 if vk := check_var_type(node.type):
-                    record_violation(vk, node, context)
+                    yield RuleViolation(vk, node, context)
             # TODO: 检查违规使用系统函数（）
 
         children = list(
@@ -276,9 +269,7 @@ def find_all_violations(file: Path, config: Config):
         )
 
         for child in children:
-            traverse(child, context)
+            yield from traverse(child, context)
 
     assert tu.cursor
-    traverse(tu.cursor, tu.cursor)
-
-    return rule_violations
+    yield from traverse(tu.cursor, tu.cursor)

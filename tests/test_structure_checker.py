@@ -93,78 +93,87 @@ def cpp_file(tmp_path):
 
 
 def test_branch(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_branch = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 14
 
 
 def test_goto(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_goto = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 1
 
 
 def test_bitop(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_bit_operation = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 6
 
 
 def test_function(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_function = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 10
 
 
 def test_global_and_static_local(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        Config(
-            grammar=GrammarConfig(
-                disable_external_global_var=True,
-                disable_internal_global_var=True,
-                disable_static_local_var=True,
-            )
-        ),
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            Config(
+                grammar=GrammarConfig(
+                    disable_external_global_var=True,
+                    disable_internal_global_var=True,
+                    disable_static_local_var=True,
+                )
+            ),
+        )
     )
     assert len(violations) == 5
-    print(violations)
     assert (
         sum(1 for vio in violations if vio.kind == ViolationKind.EXTERNAL_GLOBAL) == 2
     )

@@ -56,20 +56,22 @@ def cpp_file(tmp_path):
 
 @pytest.mark.parametrize("arch", ["x86", "x64"])
 def test_int64(cpp_file, arch):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_int64_or_larger = true
 """
-                + f"""\
+                    + f"""\
 [common]
 is_32bit = {"true" if arch == "x86" else "false"}
 """.encode()
-            )
-        ),
+                )
+            ),
+        )
     )
 
     # 32bit 模式下, size_t 是四字节，不违规
@@ -83,45 +85,51 @@ is_32bit = {"true" if arch == "x86" else "false"}
 
 
 def test_pointer(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_pointer = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 8
 
 
 def test_reference(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_reference = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 4
 
 
 def test_array(cpp_file):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                b"""\
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    b"""\
 [grammar]
 disable_array = true
 """
-            )
-        ),
+                )
+            ),
+        )
     )
     assert len(violations) == 4

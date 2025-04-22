@@ -55,14 +55,16 @@ def cpp_file(tmp_path):
 
 
 def test_blacklist(cpp_file, tmp_path):
-    violations = find_all_violations(
-        cpp_file,
-        load_config(
-            BytesIO(
-                BLACKLIST_CONFIG_CONTENT
-                + f'base_path = "{tmp_path.as_posix()}"'.encode()
-            )
-        ),
+    violations = list(
+        find_all_violations(
+            cpp_file,
+            load_config(
+                BytesIO(
+                    BLACKLIST_CONFIG_CONTENT
+                    + f'base_path = "{tmp_path.as_posix()}"'.encode()
+                )
+            ),
+        )
     )
     assert len(violations) == 2
 
@@ -76,7 +78,7 @@ def test_blacklist(cpp_file, tmp_path):
 
 
 def test_whitelist(cpp_file):
-    violations = find_all_violations(
-        cpp_file, load_config(BytesIO(WHITELIST_CONFIG_CONTENT))
+    violations = list(
+        find_all_violations(cpp_file, load_config(BytesIO(WHITELIST_CONFIG_CONTENT)))
     )
     assert len(violations) == 6
