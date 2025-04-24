@@ -4,6 +4,7 @@
 """
 
 from enum import Enum
+import os
 from pathlib import Path
 
 import clang.cindex as CX
@@ -67,7 +68,7 @@ def find_all_violations(file: Path, config: Config):
 
     index = CX.Index.create()
     tu = index.parse(
-        str(file.resolve()),
+        file.resolve().__bytes__() if os.name == "posix" else str(file.resolve()),
         options=parse_options,
         args=[f"-finput-charset={config.common.encoding}"]
         + (["-m32"] if config.common.is_32bit else []),
