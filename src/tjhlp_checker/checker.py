@@ -250,9 +250,6 @@ def find_all_violations(file: Path, config: Config):
             case CK.UNARY_OPERATOR:
                 # TODO: 检查形如 *(p+i) 的非法指针使用
                 check_unary_operator(node, context)
-            case CK.CONDITIONAL_OPERATOR:
-                if config.grammar.disable_branch:
-                    record_violation(ViolationKind.BRANCH, node, context)
             case CK.STRUCT_DECL:
                 context = node
                 if config.grammar.disable_struct:
