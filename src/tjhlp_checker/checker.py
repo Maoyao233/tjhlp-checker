@@ -167,6 +167,15 @@ def find_all_violations(file: Path, config: Config):
                 ):
                     return ViolationKind.INT64
 
+    def is_const(node_type: CX.Type) -> bool:
+        """检查类型是否为常量"""
+        if node_type.is_const_qualified():
+            return True
+        # 检查数组元素类型是否为常量
+        if node_type.kind == CX.TypeKind.CONSTANTARRAY:
+            return is_const(node_type.get_array_element_type())
+        return False
+
     def check_var_declaration(node: CX.Cursor, context: CX.Cursor):
         if type_violation_kind := check_var_type(node.type):
             record_violation(type_violation_kind, node, context)
@@ -179,7 +188,7 @@ def find_all_violations(file: Path, config: Config):
         if (
             config.grammar.disable_internal_global_var
             and node.linkage == CX.LinkageKind.INTERNAL
-            and not node.type.is_const_qualified()
+            and not is_const(node.type)
         ):
             record_violation(ViolationKind.INTERNAL_GLOBAL, node, context)
         if config.grammar.disable_external_global_var and node.linkage in (
