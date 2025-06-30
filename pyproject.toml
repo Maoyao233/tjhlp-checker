@@ -1,6 +1,6 @@
 [project]
 name = "tjhlp-checker"
-version = "0.1.1"
+version = "0.1.2"
 description = "This project is a code inspection tool for teaching purposes in the \"High-level Language Programming\" course at Tongji University, used to check whether C/C++ code uses syntax features that violate assignment requirements."
 readme = "README.md"
 requires-python = ">=3.13"
