@@ -125,3 +125,18 @@ disable_array = true
         ),
     )
     assert len(violations) == 4
+
+
+def test_global(cpp_file):
+    violations = find_all_violations(
+        cpp_file,
+        load_config(
+            BytesIO(
+                b"""\
+[grammar]
+disable_external_global_var = true
+"""
+            )
+        ),
+    )
+    assert len(violations) == 9
