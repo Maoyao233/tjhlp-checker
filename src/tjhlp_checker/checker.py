@@ -97,9 +97,9 @@ def find_all_violations(file: Path, config: Config):
             # 本地头文件，和禁用的头文件重名可以接受
             return
 
-        if (config.header.whitelist and path.name.lower() not in config.header.whitelist) or (
-            path.name.lower() in config.header.blacklist
-        ):
+        if (
+            config.header.whitelist and path.name.lower() not in config.header.whitelist
+        ) or (path.name.lower() in config.header.blacklist):
             record_violation(ViolationKind.HEADER, node, context)
 
     def check_var_type(node_type: CX.Type) -> ViolationKind | None:
@@ -170,10 +170,10 @@ def find_all_violations(file: Path, config: Config):
     def check_var_declaration(node: CX.Cursor, context: CX.Cursor):
         if type_violation_kind := check_var_type(node.type):
             record_violation(type_violation_kind, node, context)
-        
+
         # 静态全局/在匿名命名空间里的全局（除全局常变量）
 
-        # 结构体/类的成员变量声明不属于全局变量范畴 
+        # 结构体/类的成员变量声明不属于全局变量范畴
         if node.access_specifier != CX.AccessSpecifier.INVALID:
             return
         if (
