@@ -29,6 +29,9 @@ class HeaderConfig(BaseModel):
     def verify(self) -> Self:
         if self.blacklist and self.whitelist:
             raise ValueError("blacklist and whitelist cannot both be set")
+        self.base_path = self.base_path.resolve()
+        if not self.base_path.exists():
+            raise ValueError(f"base_path {self.base_path} does not exist")
         return self
 
 
