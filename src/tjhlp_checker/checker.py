@@ -97,8 +97,8 @@ def find_all_violations(file: Path, config: Config):
             # 本地头文件，和禁用的头文件重名可以接受
             return
 
-        if (config.header.whitelist and path.name not in config.header.whitelist) or (
-            path.name in config.header.blacklist
+        if (config.header.whitelist and path.name.lower() not in config.header.whitelist) or (
+            path.name.lower() in config.header.blacklist
         ):
             record_violation(ViolationKind.HEADER, node, context)
 
