@@ -53,6 +53,7 @@ tjhlp-checker --config-file=<PATH TO CONFIG FILE> <FILE>
 ```bash
 git clone https://github.com/Maoyao233/tjhlp-checker && cd tjhlp-checker
 uv sync --all-extras --dev
+uvx pre-commit install
 uv build
 ```
 
